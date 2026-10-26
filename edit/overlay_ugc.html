@@ -36,7 +36,7 @@
 <div class="card hidden" id="card"><div class="k" id="cardK"></div><div class="v" id="cardV"></div></div>
 <div class="rating hidden" id="rating"></div>
 <div class="cta hidden" id="cta"><div class="box">
-  <div class="loc" id="ctaLoc">📍 Cộng Cà Phê</div>
+  <div class="loc" id="ctaLoc">📍 Cong Caphe</div>
   <div class="big" id="ctaBig">Save this for your<br>next coffee run ☕</div>
   <div class="small" id="ctaSmall">Follow for more café finds</div>
 </div></div>
@@ -61,7 +61,8 @@ let current = -1;
 window.renderAt = (t) => {
   const tl = window.TL;
   let i = tl.findIndex(c => t >= c.start && t < c.start + c.dur); if (i < 0) i = tl.length - 1;
-  const c = tl[i], lt = t - c.start;
+  // captions wait for the incoming transition to settle
+  const c = tl[i], lt = t - c.start - (i ? 0.15 : 0);
   const cap = $('cap');
   if (current !== i) {
     cap.classList.toggle('hook', !!c.hook);
