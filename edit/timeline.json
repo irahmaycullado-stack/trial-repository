@@ -1,0 +1,18 @@
+{
+  "source": "/root/.claude/uploads/7d7b5ee0-565a-534a-8534-a39913b93a87/ea9892de-copy_328CF44A-7116-4195-BE2B-408AD3751D9D.mov",
+  "fps": 24, "w": 1080, "h": 1920,
+  "clips": [
+    {"in": 0.0,  "out": 2.6,  "zoom": "push", "hook": true},
+    {"in": 3.2,  "out": 5.2,  "zoom": "snap", "flash": true, "text": "found the cutest café 🥹"},
+    {"in": 6.0,  "out": 8.0,  "zoom": "push", "text": "the vibes?? immaculate ✨"},
+    {"in": 9.0,  "out": 11.0, "zoom": "snap", "flash": true, "text": "ordered two, kasi bakit hindi 🤭"},
+    {"in": 11.4, "out": 13.6, "zoom": "snap", "text": "coconut coffee 🥥 + matcha 🍵"},
+    {"in": 15.0, "out": 17.0, "zoom": "push", "text": "shopping muna, syempre 🛍️"},
+    {"in": 22.0, "out": 25.4, "zoom": "snap", "flash": true, "label": "FIRST SIP", "text": "COCONUT COFFEE 🥥"},
+    {"in": 29.0, "out": 32.4, "zoom": "push", "text": "creamy, sweet, perfect 🤤", "stamp": "10/10"},
+    {"in": 39.0, "out": 41.4, "zoom": "snap", "flash": true, "label": "NEXT UP", "text": "MATCHA 🍵"},
+    {"in": 42.6, "out": 46.0, "zoom": "push", "text": "earthy + smooth = ADDICTING 💚"},
+    {"in": 48.0, "out": 50.8, "zoom": "snap", "label": "VERDICT", "text": "babalikan talaga 💯"},
+    {"in": 51.4, "out": 53.8, "zoom": "push", "flash": true, "text": "see u next week 👋✨"}
+  ]
+}

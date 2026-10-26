@@ -1,0 +1,119 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<style>
+  html, body { margin: 0; width: 1080px; height: 1920px; background: transparent; overflow: hidden; }
+  * { box-sizing: border-box; }
+  body { font-family: "Inter Display", "Inter", "Noto Color Emoji", sans-serif; }
+  .layer { position: absolute; inset: 0; }
+  .flash { background: #fff; opacity: 0; }
+
+  /* hook title */
+  .hook { position: absolute; left: 0; right: 0; top: 520px; text-align: center; }
+  .hook .l1, .hook .l2 { display: block; font-weight: 900; line-height: .9; letter-spacing: -3px; word-spacing: 22px;
+    color: #fff; -webkit-text-stroke: 10px #111; paint-order: stroke fill;
+    text-shadow: 0 12px 0 rgba(0,0,0,.25); }
+  .hook .l1 { font-size: 150px; }
+  .hook .l2 { font-size: 190px; color: #ffd84d; }
+  .chip { display: inline-block; margin-top: 40px; padding: 18px 38px; border-radius: 999px;
+    background: #fff; color: #111; font-weight: 800; font-size: 50px; box-shadow: 0 10px 0 #111; border: 6px solid #111; }
+
+  /* day tag that stays after the hook */
+  .tag { position: absolute; left: 56px; top: 150px; padding: 12px 26px; border-radius: 18px;
+    background: #ffd84d; color: #111; font-weight: 900; font-size: 40px; border: 5px solid #111;
+    box-shadow: 0 7px 0 #111; transform-origin: left center; }
+
+  /* captions */
+  .cap { position: absolute; left: 60px; right: 60px; top: 1130px; text-align: center; }
+  .label { display: inline-block; margin-bottom: 18px; padding: 10px 26px; background: #111; color: #ffd84d;
+    font-weight: 900; font-size: 44px; letter-spacing: 4px; border-radius: 12px; }
+  .txt { font-weight: 900; font-size: 92px; line-height: 1.02; letter-spacing: -2px; color: #fff;
+    -webkit-text-stroke: 9px #111; paint-order: stroke fill; text-shadow: 0 10px 0 rgba(0,0,0,.28); }
+  .txt .w { display: inline-block; margin: 0 0.13em; }
+  .stamp { position: absolute; right: 60px; top: 560px; width: 250px; height: 250px; border-radius: 50%;
+    background: #ff4d6d; border: 8px solid #111; box-shadow: 0 10px 0 #111; color: #fff;
+    display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 84px; letter-spacing: -3px; }
+  .hidden { display: none !important; }
+</style></head>
+<body>
+<div class="layer flash" id="flash"></div>
+<div class="tag hidden" id="tag">DAY 1 · CỘNG CÀ PHÊ ☕</div>
+<div class="hook hidden" id="hook">
+  <span class="l1" id="h1">WHAT I ATE</span>
+  <span class="l2" id="h2">THIS WEEK</span>
+  <span class="chip" id="chip">day 1: Cộng Cà Phê ☕</span>
+</div>
+<div class="cap hidden" id="cap"><div class="label hidden" id="label"></div><div class="txt" id="txt"></div></div>
+<div class="stamp hidden" id="stamp"></div>
+<script>
+// timeline: [{start, dur, ...clip}] injected by render.mjs
+const ease = x => 1 - Math.pow(1 - x, 3);
+const clamp = x => Math.max(0, Math.min(1, x));
+// overshoot pop: 0 -> 1.12 -> 1
+function pop(t, len = 0.28) {
+  const x = clamp(t / len);
+  if (x < 0.7) return 0.4 + 0.72 * ease(x / 0.7);
+  return 1.12 - 0.12 * ease((x - 0.7) / 0.3);
+}
+const $ = id => document.getElementById(id);
+let current = -1;
+window.renderAt = (t) => {
+  const tl = window.TL;
+  const i = tl.findIndex(c => t >= c.start && t < c.start + c.dur);
+  const c = tl[i < 0 ? tl.length - 1 : i];
+  const lt = t - c.start;
+
+  // white flash on flagged cuts: 4 frames fading out
+  $('flash').style.opacity = (c.flash && lt < 0.17) ? (1 - lt / 0.17) * 0.85 : 0;
+
+  // hook
+  $('hook').classList.toggle('hidden', !c.hook);
+  if (c.hook) {
+    const s1 = lt < 0.1 ? 0 : pop(lt - 0.1), s2 = lt < 0.35 ? 0 : pop(lt - 0.35), s3 = lt < 0.75 ? 0 : pop(lt - 0.75);
+    $('h1').style.transform = `scale(${s1}) rotate(-3deg)`; $('h1').style.opacity = s1 ? 1 : 0;
+    $('h2').style.transform = `scale(${s2}) rotate(2deg)`;  $('h2').style.opacity = s2 ? 1 : 0;
+    $('chip').style.transform = `scale(${s3})`; $('chip').style.opacity = s3 ? 1 : 0;
+    // tiny wobble to keep it alive
+    $('hook').style.transform = `translateY(${Math.sin(lt * 4) * 6}px)`;
+  }
+
+  // persistent day tag after the hook, hidden on the outro
+  const showTag = !c.hook && i !== tl.length - 1;
+  $('tag').classList.toggle('hidden', !showTag);
+  if (showTag) {
+    const intro = tl[1].start;
+    $('tag').style.transform = `scale(${t - intro < 0.3 ? pop(t - intro) : 1})`;
+  }
+
+  // caption: words pop in one after another
+  $('cap').classList.toggle('hidden', !c.text);
+  if (c.text) {
+    if (current !== i) {
+      $('txt').innerHTML = c.text.split(' ').map(w => `<span class="w">${w}</span>`).join('');
+      $('label').textContent = c.label || '';
+      $('label').classList.toggle('hidden', !c.label);
+      current = i;
+    }
+    const delay = c.flash ? 0.08 : 0.02;
+    $('label').style.transform = `scale(${lt < delay ? 0 : pop(lt - delay)}) rotate(-2deg)`;
+    const base = delay + (c.label ? 0.12 : 0);
+    [...$('txt').children].forEach((w, k) => {
+      const wt = lt - base - k * 0.07;
+      w.style.opacity = wt < 0 ? 0 : 1;
+      w.style.transform = `scale(${wt < 0 ? 0 : pop(wt, 0.22)}) translateY(${wt < 0 ? 30 : 30 * (1 - ease(clamp(wt / 0.22)))}px)`;
+    });
+    // quick fade out at the end of the clip
+    $('cap').style.opacity = clamp((c.dur - lt) / 0.08);
+  }
+
+  // rating stamp slams in
+  $('stamp').classList.toggle('hidden', !c.stamp);
+  if (c.stamp) {
+    $('stamp').textContent = c.stamp;
+    const st = lt - 1.0;
+    const s = st < 0 ? 0 : (st < 0.18 ? 2.2 - 1.2 * ease(st / 0.18) : 1);
+    $('stamp').style.transform = `scale(${s}) rotate(${-12 + Math.sin(lt * 3) * 3}deg)`;
+    $('stamp').style.opacity = st < 0 ? 0 : 1;
+  }
+};
+</script>
+</body></html>
