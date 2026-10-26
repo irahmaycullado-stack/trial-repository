@@ -5,7 +5,7 @@ import { readFileSync, mkdirSync } from 'fs';
 import { execFileSync } from 'child_process';
 import path from 'path';
 
-const [tlPath, buildDir] = process.argv.slice(2);
+const [tlPath, buildDir, overlay = 'overlay.html'] = process.argv.slice(2);
 const tl = JSON.parse(readFileSync(tlPath, 'utf8'));
 let start = 0;
 const clips = tl.clips.map((c, i) => {
@@ -18,7 +18,7 @@ const outDir = path.join(buildDir, 'ov'); mkdirSync(outDir, { recursive: true })
 
 const browser = await chromium.launch();
 const page = await browser.newPage({ viewport: { width: tl.w, height: tl.h } });
-await page.goto('file://' + path.resolve(path.dirname(tlPath), 'overlay.html'));
+await page.goto('file://' + path.resolve(path.dirname(tlPath), overlay));
 await page.evaluate(c => { window.TL = c; }, clips);
 await page.evaluate(() => document.fonts.ready);
 for (let f = 0; f < frames; f++) {

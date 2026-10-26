@@ -10,12 +10,14 @@ for i, c in enumerate(tl["clips"]):
     if c["zoom"] == "snap":
         # CapCut-style punch-in: starts zoomed at 1.18, eases out to 1.04 in 0.35s, then drifts
         z = f"if(lt(t,0.35),1.04+0.14*pow(1-t/0.35,3),1.04+0.02*(t-0.35)/{d})"
+    elif c["zoom"] == "gentle":
+        z = f"1.0+0.035*t/{d}"  # barely-there push, keeps UGC feeling handheld
     else:
         z = f"1.0+0.07*t/{d}"  # slow push-in
     vf = (f"scale=w='trunc({W}*({z})/2)*2':h='trunc({H}*({z})/2)*2':eval=frame:flags=lanczos,"
           f"crop={W}:{H}:(iw-{W})/2:(ih-{H})/2,"
-          f"eq=contrast=1.06:saturation=1.18:brightness=0.01,"
-          f"colorbalance=rm=0.03:bm=-0.03,fps={FPS},format=yuv420p")
+          f"{tl.get('grade', 'eq=contrast=1.06:saturation=1.18:brightness=0.01,colorbalance=rm=0.03:bm=-0.03')},"
+          f"fps={FPS},format=yuv420p")
     af = f"afade=t=in:d=0.04,afade=t=out:st={d-0.05}:d=0.05"
     p = os.path.join(out_dir, f"part{i:02d}.mp4")
     subprocess.run(["ffmpeg", "-v", "error", "-y", "-ss", str(c["in"]), "-t", str(d), "-i", tl["source"],

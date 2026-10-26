@@ -1,0 +1,18 @@
+{
+  "source": "/root/.claude/uploads/7d7b5ee0-565a-534a-8534-a39913b93a87/ea9892de-copy_328CF44A-7116-4195-BE2B-408AD3751D9D.mov",
+  "fps": 24, "w": 1080, "h": 1920,
+  "grade": "eq=contrast=1.05:saturation=1.07:gamma=1.02,colorbalance=rm=0.02:bm=-0.02",
+  "clips": [
+    {"in": 29.0, "out": 31.2, "zoom": "snap",   "hook": ["Okay… this coconut", "coffee is *actually*", "worth the hype"]},
+    {"in": 0.0,  "out": 2.0,  "zoom": "gentle", "pin": "Cộng Cà Phê", "text": "Found it 📍"},
+    {"in": 4.0,  "out": 6.0,  "zoom": "gentle", "text": "Cozy *vintage Vietnamese* vibes inside"},
+    {"in": 6.4,  "out": 8.0,  "zoom": "gentle", "text": "They even sell *merch* 👀"},
+    {"in": 9.5,  "out": 12.0, "zoom": "push",   "text": "Got the *coconut coffee* + a *matcha*"},
+    {"in": 23.0, "out": 24.6, "zoom": "snap",   "card": ["MUST TRY", "Coconut Coffee 🥥"]},
+    {"in": 32.5, "out": 34.6, "zoom": "gentle", "text": "Thick, creamy, *not too sweet*"},
+    {"in": 39.0, "out": 40.4, "zoom": "snap",   "card": ["ALSO GOOD", "Matcha 🍵"]},
+    {"in": 42.4, "out": 44.4, "zoom": "gentle", "text": "Smooth and *not bitter* at all"},
+    {"in": 48.3, "out": 50.3, "zoom": "push",   "text": "Would I come back? *100%*", "rating": "10/10"},
+    {"in": 11.6, "out": 13.6, "zoom": "push",   "cta": true}
+  ]
+}
