@@ -127,13 +127,9 @@ for b in range(nbars):
             swing = 0.06 * beat if e % 2 else 0
             place(music, hat(e == 7), t0 + e * beat / 2 + swing, 0.8 if e % 2 == 0 else 0.55, pan=0.25)
 
-# warmth + soft vinyl crackle
+# warmth
 for ch_ in range(2):
     music[:, ch_] = fft_filter(music[:, ch_], lo=30, hi=9000)
-crackle = np.zeros(N)
-pos = rng.integers(0, N, int(total * 7))
-crackle[pos] = rng.standard_normal(len(pos)) * 0.08
-music += fft_filter(crackle, lo=1500, hi=8000)[:, None] * 0.5
 # fade in quickly, fade out over the end card
 env = np.ones(N)
 env[: int(0.08 * SR)] = np.linspace(0, 1, int(0.08 * SR))
@@ -145,25 +141,10 @@ music *= env[:, None]
 sfx = np.zeros((N, 2))
 
 
-def whoosh(dur=0.42, strength=1.0):
-    t = t_(dur)
-    n = rng.standard_normal(len(t))
-    # band-pass sweep: filter in short blocks with a rising centre frequency
-    out = np.zeros_like(n)
-    blk = 960
-    for i in range(0, len(n), blk):
-        x = n[i:i + blk]
-        fc = 400 + 3500 * (i / len(n)) ** 1.5
-        out[i:i + blk] = fft_filter(x, lo=fc * 0.5, hi=fc * 1.8)
-    env = np.sin(np.pi * np.clip(t / dur, 0, 1)) ** 2
-    out = out / (np.abs(out).max() + 1e-9) * env * strength
-    return out
-
-
 def pop():
     t = t_(0.09)
     f = 520 + 900 * np.exp(-t * 60)
-    return np.sin(2 * np.pi * np.cumsum(f) / SR) * np.exp(-t * 45) * 0.6
+    return np.sin(2 * np.pi * np.cumsum(f) / SR) * np.exp(-t * 45)
 
 
 def sparkle():
@@ -187,24 +168,21 @@ def chime():
 
 
 for i, c in enumerate(tl["clips"]):
-    st = starts[i]
-    if i:
-        tr = c.get("transition", "fade")
-        strength = 0.55 if tr.startswith("smooth") else 0.3
-        w = whoosh()
-        place(sfx, w, st + T / FPS / 2 - 0.21, strength, pan=-0.4 if tr == "smoothleft" else 0.0)
-    lt0 = st + (0.15 if i else 0)  # overlay_ugc.html delays everything after clip 0 by 0.15s
-    if c.get("hook"):
-        place(sfx, pop(), 0.05, 0.5)
-    if c.get("pin"):
-        place(sfx, pop(), lt0 + 0.15, 0.7)
-    if c.get("card"):
-        place(sfx, pop(), lt0 + 0.08, 0.7)
-        place(sfx, whoosh(0.25, 0.3), lt0 + 0.02, 1.0, pan=-0.5)
-    if c.get("rating"):
-        place(sfx, sparkle(), lt0 + 0.9, 1.0)
-    if c.get("cta"):
-        place(sfx, chime(), lt0 + 0.1, 1.0)
+    lt0 = starts[i] + (0.15 if i else 0)  # overlay_ugc.html delays everything after clip 0 by 0.15s
+    for b in c.get("beats", [{"at": 0, **c}]):
+        at = lt0 + b["at"]
+        if b.get("hook"):
+            place(sfx, pop(), at + 0.05, 0.55)
+        if b.get("pin"):
+            place(sfx, pop(), at + 0.6, 0.6)
+        if b.get("card"):
+            place(sfx, pop(), at + 0.08, 0.65)
+        if b.get("text"):
+            place(sfx, pop(), at + 0.05, 0.45)
+        if b.get("rating"):
+            place(sfx, sparkle(), at + 0.9, 1.0)
+        if b.get("cta"):
+            place(sfx, chime(), at + 0.1, 1.0)
 
 
 def write(path, x, peak):

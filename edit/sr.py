@@ -30,7 +30,8 @@ class Upscaler:
 
     @torch.inference_mode()
     def __call__(self, frame):
-        """uint8 HxWx3 RGB -> uint8 (4H)x(4W)x3 RGB"""
-        x = torch.from_numpy(frame).permute(2, 0, 1).float().div_(255).unsqueeze(0).contiguous(memory_format=torch.channels_last)
-        y = self.net(x).clamp_(0, 1).mul_(255).round_().byte()
-        return y[0].permute(1, 2, 0).contiguous().numpy()
+        """HxWx3 RGB (uint8, or uint16 for 10-bit HDR) -> same dtype at (4H)x(4W)x3"""
+        peak = 65535 if frame.dtype == np.uint16 else 255
+        x = torch.from_numpy(frame.astype(np.float32)).permute(2, 0, 1).div_(peak).unsqueeze(0)
+        y = self.net(x.contiguous(memory_format=torch.channels_last)).clamp_(0, 1).mul_(peak).round_()
+        return y[0].permute(1, 2, 0).contiguous().numpy().astype(frame.dtype)

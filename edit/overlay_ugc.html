@@ -50,39 +50,44 @@ const enter = (el, t, len = 0.25, rise = 26) => {
   el.style.opacity = t < 0 ? 0 : x;
   el.style.transform = `${el.dataset.base || ''} translateY(${(1 - x) * rise}px) scale(${0.94 + 0.06 * x})`;
 };
-const words = s => s.split(' ').map(w => w.replace(/\*([^*]+)\*/g, '<span class="hl">$1</span>'));
 const lineHTML = s => {
   // keep *highlighted phrases* together in one pill
   return s.replace(/\*([^*]+)\*/g, (_, p) => `<span class="w hl">${p}</span>`)
           .split(/(<span class="w hl">[^<]+<\/span>)/).map(chunk =>
             chunk.startsWith('<span') ? chunk : chunk.split(' ').filter(Boolean).map(w => `<span class="w">${w}</span>`).join('')).join('');
 };
-let current = -1;
+let current = '';
 window.renderAt = (t) => {
   const tl = window.TL;
   let i = tl.findIndex(c => t >= c.start && t < c.start + c.dur); if (i < 0) i = tl.length - 1;
   // captions wait for the incoming transition to settle
-  const c = tl[i], lt = t - c.start - (i ? 0.15 : 0);
+  const clip = tl[i], ct = t - clip.start - (i ? 0.15 : 0);
+  // long takes carry several "beats" of text; an empty beat clears the screen
+  const beats = clip.beats || [{ at: 0, ...clip }];
+  let b = 0; while (b + 1 < beats.length && ct >= beats[b + 1].at) b++;
+  const c = beats[b], lt = ct - c.at;
+  const end = (b + 1 < beats.length ? beats[b + 1].at : clip.dur) - c.at;
+  const out = clamp((end - lt) / 0.15);
   const cap = $('cap');
-  if (current !== i) {
+  if (current !== `${i}.${b}`) {
     cap.classList.toggle('hook', !!c.hook);
     cap.innerHTML = c.hook ? c.hook.map(l => `<span class="line">${lineHTML(l)}</span>`).join('') : (c.text ? lineHTML(c.text) : '');
     $('pinTxt').textContent = c.pin || '';
     if (c.card) { $('cardK').textContent = c.card[0]; $('cardV').textContent = c.card[1]; }
     $('rating').textContent = c.rating || '';
-    current = i;
+    current = `${i}.${b}`;
   }
   cap.classList.toggle('hidden', !(c.hook || c.text));
   // words appear quickly in sequence, like auto-captions
   [...cap.querySelectorAll('.w')].forEach((w, k) => enter(w, lt - 0.05 - k * 0.06, 0.18, 18));
-  cap.style.opacity = clamp((c.dur - lt) / 0.1);
+  cap.style.opacity = clamp((end - lt) / 0.1);
 
   $('pin').classList.toggle('hidden', !c.pin);
-  if (c.pin) { $('pin').dataset.base = 'translateX(-50%)'; enter($('pin'), lt - 0.15, 0.3, 40); }
+  if (c.pin) { $('pin').dataset.base = 'translateX(-50%)'; enter($('pin'), lt - 0.6, 0.3, 40); }
   $('card').classList.toggle('hidden', !c.card);
   if (c.card) {
     const x = ease(clamp((lt - 0.08) / 0.3));
-    $('card').style.opacity = x; $('card').style.transform = `translateX(${(1 - x) * -140}px)`;
+    $('card').style.opacity = x * out; $('card').style.transform = `translateX(${(1 - x) * -140}px)`;
   }
   $('rating').classList.toggle('hidden', !c.rating);
   if (c.rating) enter($('rating'), lt - 0.9, 0.25, 30);

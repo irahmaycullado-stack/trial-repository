@@ -1,0 +1,24 @@
+{
+  "source": "/root/.claude/uploads/7d7b5ee0-565a-534a-8534-a39913b93a87/ea9892de-copy_328CF44A-7116-4195-BE2B-408AD3751D9D.mov",
+  "upscale": "/home/user/models/realesr-general-x4v3.pth",
+  "hdr": true, "stabilize": false,
+  "fps": 24, "w": 1080, "h": 1920, "src_w": 480, "src_h": 854, "xfade_frames": 8,
+  "clips": [
+    {"in": 0.0,  "out": 2.8,  "zoom": 0.04, "hook": ["Okay… this coconut", "green rice drink is", "*actually* worth the hype"], "pin": "Cong Caphe"},
+    {"in": 3.2,  "out": 8.0,  "zoom": 0.04, "text": "*Vintage vibes*"},
+    {"in": 8.5,  "out": 11.4, "zoom": 0.04, "text": "Got the *coconut green rice* + an *avocado smoothie*"},
+    {"in": 22.0, "out": 35.8, "zoom": 0.03, "beats": [
+      {"at": 0.0, "card": ["MUST TRY", "Coconut Green Rice 🥥"]},
+      {"at": 3.5},
+      {"at": 6.2, "text": "Thick, creamy, *not too sweet*"},
+      {"at": 10.5}
+    ]},
+    {"in": 38.4, "out": 46.6, "zoom": 0.03, "beats": [
+      {"at": 0.0, "card": ["ALSO GOOD", "Avocado Smoothie 🥑"]},
+      {"at": 3.0},
+      {"at": 3.6, "text": "Rich, smooth and *so refreshing*"}
+    ]},
+    {"in": 47.9, "out": 50.3, "zoom": 0.04, "text": "Would I come back? *100%*", "rating": "10/10"},
+    {"in": 11.4, "out": 14.0, "zoom": 0.04, "transition": "fadeblack", "cta": true}
+  ]
+}

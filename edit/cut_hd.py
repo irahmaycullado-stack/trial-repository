@@ -1,6 +1,9 @@
-"""HD build: stabilize, AI-upscale and zoom each clip, then join with soft transitions.
+"""HD build: (optionally) stabilize, AI-upscale and zoom each clip, then join with soft transitions.
 
-Writes base.mp4 and clips.json (start/dur of each clip on the joined timeline) into the build dir.
+With "hdr": true the source's 10-bit HLG / BT.2020 signal is kept as-is end to end (16-bit RGB in
+between), so colour and contrast match the original iPhone recording.
+
+Writes base.mkv and clips.json (start/dur of each clip on the joined timeline) into the build dir.
 """
 import json, os, subprocess, sys
 import numpy as np
@@ -10,39 +13,46 @@ out_dir = sys.argv[2]
 W, H, FPS = tl["w"], tl["h"], tl["fps"]
 SW, SH = tl["src_w"], tl["src_h"]
 T = tl.get("xfade_frames", 8)            # transition length in frames
-BT709 = ["-colorspace", "bt709", "-color_primaries", "bt709", "-color_trc", "bt709", "-color_range", "tv"]
+HDR = tl.get("hdr", False)
+if HDR:
+    MAT, RAW, DT, YUV = "bt2020", "rgb48le", np.uint16, "yuv420p10le"
+    TAGS = ["-colorspace", "bt2020nc", "-color_primaries", "bt2020", "-color_trc", "arib-std-b67", "-color_range", "tv"]
+else:
+    MAT, RAW, DT, YUV = "bt709", "rgb24", np.uint8, "yuv420p"
+    TAGS = ["-colorspace", "bt709", "-color_primaries", "bt709", "-color_trc", "bt709", "-color_range", "tv"]
 sr = None
 if tl.get("upscale"):
     from sr import Upscaler
     sr = Upscaler(tl["upscale"])
 UP = 4 if sr else 1
+inf = tl["input_filter"] + "," if tl.get("input_filter") else ""
 clips, parts, start = [], [], 0
 n = len(tl["clips"])
 for i, c in enumerate(tl["clips"]):
     nd = round((c["out"] - c["in"]) * FPS)
     nl = nd + (T if i < n - 1 else 0)    # each clip runs T frames longer so the next one can dissolve over it
     d = nl / FPS
-    tmp = os.path.join(out_dir, f"stab{i:02d}.trf")
     trim = ["-ss", str(c["in"]), "-i", tl["source"], "-frames:v", str(nl)]
-    # light stabilization on the source clip (two passes)
-    subprocess.run(["ffmpeg", "-v", "error", "-y", *trim, "-vf",
-                    f"{tl['input_filter'] + ',' if tl.get('input_filter') else ''}vidstabdetect=shakiness=5:accuracy=15:result={tmp}", "-f", "null", "-"], check=True)
-    pre = (f"{tl['input_filter'] + ',' if tl.get('input_filter') else ''}"
-           f"fps={FPS},vidstabtransform=input={tmp}:smoothing=12:optzoom=1:interpol=bicubic,"
-           f"hqdn3d=1.2:1.2:2:2,scale={SW}:{SH}:in_color_matrix=bt709:in_range=tv,format=rgb24")
+    stab = ""
+    if tl.get("stabilize", True):        # vidstab is 8-bit only, so it is skipped for HDR
+        tmp = os.path.join(out_dir, f"stab{i:02d}.trf")
+        subprocess.run(["ffmpeg", "-v", "error", "-y", *trim, "-vf",
+                        f"{inf}vidstabdetect=shakiness=5:accuracy=15:result={tmp}", "-f", "null", "-"], check=True)
+        stab = f"vidstabtransform=input={tmp}:smoothing=12:optzoom=1:interpol=bicubic,"
+    pre = f"{inf}fps={FPS},{stab}hqdn3d=1.2:1.2:2:2,scale={SW}:{SH}:in_color_matrix={MAT}:in_range=tv,format={RAW}"
     z = f"1.0+{c.get('zoom', 0.04)}*t/{d}"  # slow push-in, sampled down from the 4x frame so it never pixelates
     post = (f"scale=w='trunc({W}*({z})/2)*2':h='trunc({H}*({z})/2)*2':eval=frame:flags=lanczos,"
-            f"crop={W}:{H}:(iw-{W})/2:(ih-{H})/2,{tl['grade'] + ',' if tl.get('grade') else ''}unsharp=5:5:0.35,"
-            f"scale=out_color_matrix=bt709:out_range=tv,format=yuv420p")
+            f"crop={W}:{H}:(iw-{W})/2:(ih-{H})/2,{tl['grade'] + ',' if tl.get('grade') else ''}"
+            f"scale=out_color_matrix={MAT}:out_range=tv,format={YUV},unsharp=5:5:0.35")
     p = os.path.join(out_dir, f"part{i:02d}.mkv")
     dec = subprocess.Popen(["ffmpeg", "-v", "error", *trim, "-vf", pre, "-f", "rawvideo", "-"], stdout=subprocess.PIPE)
-    enc = subprocess.Popen(["ffmpeg", "-v", "error", "-y", "-f", "rawvideo", "-pix_fmt", "rgb24",
+    enc = subprocess.Popen(["ffmpeg", "-v", "error", "-y", "-f", "rawvideo", "-pix_fmt", RAW,
                             "-s", f"{SW * UP}x{SH * UP}", "-r", str(FPS), "-i", "-", "-vf", post,
-                            "-c:v", "libx264", "-crf", "8", "-preset", "medium", *BT709, p], stdin=subprocess.PIPE)
-    fsz = SW * SH * 3
+                            "-c:v", "libx264", "-crf", "8", "-preset", "medium", *TAGS, p], stdin=subprocess.PIPE)
+    fsz = SW * SH * 3 * np.dtype(DT).itemsize
     k = 0
     while (buf := dec.stdout.read(fsz)) and len(buf) == fsz:
-        f = np.frombuffer(buf, np.uint8).reshape(SH, SW, 3)
+        f = np.frombuffer(buf, DT).reshape(SH, SW, 3)
         enc.stdin.write((sr(f) if sr else f).tobytes())
         k += 1
         print(f"\rclip {i + 1}/{n} frame {k}/{nl}", end="", flush=True)
@@ -69,6 +79,6 @@ for i in range(1, n):
     fa.append(f"{au}[{n + i}:a]acrossfade=d={T / FPS}:c1=tri:c2=tri[a{i}]")
     v, au = f"[v{i}]", f"[a{i}]"
 subprocess.run(["ffmpeg", "-v", "error", "-y", *args, "-filter_complex", ";".join(fv + fa),
-                "-map", v, "-map", au, "-c:v", "libx264", "-crf", "8", "-preset", "medium", *BT709,
+                "-map", v, "-map", au, "-c:v", "libx264", "-crf", "8", "-preset", "medium", *TAGS,
                 "-c:a", "pcm_s16le", os.path.join(out_dir, "base.mkv")], check=True)
 json.dump(clips, open(os.path.join(out_dir, "clips.json"), "w"), ensure_ascii=False, indent=1)
