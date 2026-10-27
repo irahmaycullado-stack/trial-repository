@@ -2,14 +2,15 @@
 
 Graphics are mapped so overlay white sits at HLG reference white (75% signal, ITU-R BT.2408)
 instead of peak brightness, keeping the text comfortable next to the original footage.
-usage: composite_hdr.py base.mkv overlay_dir audio.wav out.mp4
+usage: composite_hdr.py base.mkv overlay_dir audio.wav out.mp4 [fps]
 """
 import glob, subprocess, sys
 import cv2
 import numpy as np
 
 base, ov_dir, audio, out = sys.argv[1:5]
-W, H, FPS = 1080, 1920, 24
+W, H = 1080, 1920
+FPS = int(sys.argv[5]) if len(sys.argv) > 5 else 24
 
 # sRGB 8-bit -> linear light
 c = np.arange(256) / 255
