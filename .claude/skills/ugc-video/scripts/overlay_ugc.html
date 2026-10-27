@@ -1,0 +1,102 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<style>
+  html, body { margin: 0; width: 1080px; height: 1920px; background: transparent; overflow: hidden; }
+  * { box-sizing: border-box; }
+  body { font-family: "Inter Display", "Inter", "Noto Color Emoji", sans-serif; color: #fff; }
+  .hidden { display: none !important; }
+  /* TikTok-native caption: white, thin outline, soft shadow; keeps clear of the right action rail */
+  .cap { position: absolute; left: 90px; right: 150px; top: 1180px; text-align: center;
+    font-weight: 800; font-size: 68px; line-height: 1.12; text-wrap: balance; letter-spacing: -1px;
+    -webkit-text-stroke: 5px rgba(0,0,0,.85); paint-order: stroke fill; text-shadow: 0 4px 18px rgba(0,0,0,.45); }
+  .cap .w { display: inline-block; margin: 0 .12em; }
+  .hl { color: #111; -webkit-text-stroke: 0; text-shadow: none; background: #ffe36e; padding: 0 .18em; border-radius: 12px; }
+  /* hook sits higher and bigger */
+  .hook { top: 330px; left: 50px; right: 50px; font-size: 80px; }
+  .hook .line { white-space: nowrap; }
+  .hook .line { display: block; }
+  .pin { position: absolute; left: 50%; top: 1010px; display: flex; align-items: center; gap: 18px; padding: 20px 36px 20px 24px;
+    background: #fff; color: #111; border-radius: 26px; font-weight: 800; font-size: 54px; box-shadow: 0 14px 40px rgba(0,0,0,.35); }
+  .pin .ic { font-size: 50px; line-height: 1; }
+  .card { position: absolute; left: 70px; top: 1160px; padding: 26px 40px 30px; background: rgba(255,255,255,.96); color: #111;
+    border-radius: 28px; box-shadow: 0 16px 44px rgba(0,0,0,.35); }
+  .card .k { font-size: 30px; font-weight: 800; letter-spacing: 5px; color: #2f6b3a; }
+  .card .v { font-size: 74px; font-weight: 900; letter-spacing: -2px; margin-top: 4px; }
+  .rating { position: absolute; right: 150px; top: 960px; padding: 14px 30px; border-radius: 999px; background: #ffe36e; color: #111;
+    font-weight: 900; font-size: 64px; box-shadow: 0 12px 30px rgba(0,0,0,.35); }
+  .cta { position: absolute; inset: 0; background: linear-gradient(to top, rgba(0,0,0,.72) 0%, rgba(0,0,0,.25) 45%, rgba(0,0,0,0) 65%); }
+  .cta .box { position: absolute; left: 80px; right: 80px; top: 1100px; text-align: center; }
+  .cta .loc { display: inline-flex; align-items: center; gap: 14px; padding: 14px 30px; border-radius: 999px; background: #fff; color: #111; font-weight: 800; font-size: 46px; }
+  .cta .big { margin-top: 34px; font-weight: 900; font-size: 92px; line-height: 1.02; letter-spacing: -3px; }
+  .cta .small { margin-top: 26px; font-weight: 700; font-size: 40px; opacity: .92; white-space: nowrap; }
+</style></head>
+<body>
+<div class="cap hidden" id="cap"></div>
+<div class="pin hidden" id="pin"><span class="ic">📍</span><span id="pinTxt"></span></div>
+<div class="card hidden" id="card"><div class="k" id="cardK"></div><div class="v" id="cardV"></div></div>
+<div class="rating hidden" id="rating"></div>
+<div class="cta hidden" id="cta"><div class="box">
+  <div class="loc" id="ctaLoc">📍 Cong Caphe</div>
+  <div class="big" id="ctaBig">Save this for your<br>next café visit 📌</div>
+  <div class="small" id="ctaSmall">Coconut Green Rice 🥥 + Avocado Smoothie 🥑</div>
+</div></div>
+<script>
+const ease = x => 1 - Math.pow(1 - x, 3);
+const clamp = x => Math.max(0, Math.min(1, x));
+const $ = id => document.getElementById(id);
+// soft entrance: fade + rise + slight scale, no cartoon bounce
+const enter = (el, t, len = 0.25, rise = 26) => {
+  const x = ease(clamp(t / len));
+  el.style.opacity = t < 0 ? 0 : x;
+  el.style.transform = `${el.dataset.base || ''} translateY(${(1 - x) * rise}px) scale(${0.94 + 0.06 * x})`;
+};
+const lineHTML = s => {
+  // keep *highlighted phrases* together in one pill
+  return s.replace(/\*([^*]+)\*/g, (_, p) => `<span class="w hl">${p}</span>`)
+          .split(/(<span class="w hl">[^<]+<\/span>)/).map(chunk =>
+            chunk.startsWith('<span') ? chunk : chunk.split(' ').filter(Boolean).map(w => `<span class="w">${w}</span>`).join('')).join('');
+};
+let current = '';
+window.renderAt = (t) => {
+  const tl = window.TL;
+  let i = tl.findIndex(c => t >= c.start && t < c.start + c.dur); if (i < 0) i = tl.length - 1;
+  // captions wait for the incoming transition to settle
+  const clip = tl[i], ct = t - clip.start - (i ? 0.15 : 0);
+  // long takes carry several "beats" of text; an empty beat clears the screen
+  const beats = clip.beats || [{ at: 0, ...clip }];
+  let b = 0; while (b + 1 < beats.length && ct >= beats[b + 1].at) b++;
+  const c = beats[b], lt = ct - c.at;
+  const end = (b + 1 < beats.length ? beats[b + 1].at : clip.dur) - c.at;
+  const out = clamp((end - lt) / 0.15);
+  const cap = $('cap');
+  if (current !== `${i}.${b}`) {
+    cap.classList.toggle('hook', !!c.hook);
+    cap.innerHTML = c.hook ? c.hook.map(l => `<span class="line">${lineHTML(l)}</span>`).join('') : (c.text ? lineHTML(c.text) : '');
+    $('pinTxt').textContent = c.pin || '';
+    if (c.card) { $('cardK').textContent = c.card[0]; $('cardV').textContent = c.card[1]; }
+    $('rating').textContent = c.rating || '';
+    current = `${i}.${b}`;
+  }
+  cap.classList.toggle('hidden', !(c.hook || c.text));
+  // words appear quickly in sequence, like auto-captions
+  [...cap.querySelectorAll('.w')].forEach((w, k) => enter(w, lt - 0.05 - k * 0.06, 0.18, 18));
+  cap.style.opacity = clamp((end - lt) / 0.1);
+
+  $('pin').classList.toggle('hidden', !c.pin);
+  if (c.pin) { $('pin').dataset.base = 'translateX(-50%)'; enter($('pin'), lt - 0.6, 0.3, 40); }
+  $('card').classList.toggle('hidden', !c.card);
+  if (c.card) {
+    const x = ease(clamp((lt - 0.08) / 0.3));
+    $('card').style.opacity = x * out; $('card').style.transform = `translateX(${(1 - x) * -140}px)`;
+  }
+  $('rating').classList.toggle('hidden', !c.rating);
+  if (c.rating) enter($('rating'), lt - 0.9, 0.25, 30);
+
+  $('cta').classList.toggle('hidden', !c.cta);
+  if (c.cta) {
+    $('cta').style.opacity = ease(clamp(lt / 0.3));
+    enter($('ctaLoc'), lt - 0.1); enter($('ctaBig'), lt - 0.3); enter($('ctaSmall'), lt - 0.7);
+  }
+};
+</script>
+</body></html>
