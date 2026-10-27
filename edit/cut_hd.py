@@ -45,10 +45,17 @@ for i, c in enumerate(tl["clips"]):
             f"crop={W}:{H}:(iw-{W})/2:(ih-{H})/2,{tl['grade'] + ',' if tl.get('grade') else ''}"
             f"scale=out_color_matrix={MAT}:out_range=tv,format={YUV},unsharp=5:5:0.35")
     p = os.path.join(out_dir, f"part{i:02d}.mkv")
+    a = os.path.join(out_dir, f"part{i:02d}.wav")
+    if os.path.exists(p) and os.path.exists(a):  # finished in an earlier run: resume after a restart
+        parts.append((p, a))
+        clips.append({**c, "start": start / FPS, "dur": nd / FPS})
+        start += nd
+        continue
+    tmp_p = p + ".partial.mkv"
     dec = subprocess.Popen(["ffmpeg", "-v", "error", *trim, "-vf", pre, "-f", "rawvideo", "-"], stdout=subprocess.PIPE)
     enc = subprocess.Popen(["ffmpeg", "-v", "error", "-y", "-f", "rawvideo", "-pix_fmt", RAW,
                             "-s", f"{SW * UP}x{SH * UP}", "-r", str(FPS), "-i", "-", "-vf", post,
-                            "-c:v", "libx264", "-crf", "8", "-preset", "medium", *TAGS, p], stdin=subprocess.PIPE)
+                            "-c:v", "libx264", "-crf", "8", "-preset", "medium", *TAGS, tmp_p], stdin=subprocess.PIPE)
     fsz = SW * SH * 3 * np.dtype(DT).itemsize
     k = 0
     while (buf := dec.stdout.read(fsz)) and len(buf) == fsz:
@@ -57,9 +64,9 @@ for i, c in enumerate(tl["clips"]):
         k += 1
         print(f"\rclip {i + 1}/{n} frame {k}/{nl}", end="", flush=True)
     enc.stdin.close(); enc.wait(); dec.wait()
-    a = os.path.join(out_dir, f"part{i:02d}.wav")
     subprocess.run(["ffmpeg", "-v", "error", "-y", "-ss", str(c["in"]), "-t", str(d), "-i", tl["source"],
                     "-vn", "-ar", "48000", "-ac", "2", a], check=True)
+    os.replace(tmp_p, p)
     parts.append((p, a))
     clips.append({**c, "start": start / FPS, "dur": nd / FPS})
     start += nd
