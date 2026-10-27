@@ -10,6 +10,7 @@ SR = 48000
 rng = np.random.default_rng(7)
 tl = json.load(open(sys.argv[1]))
 out_dir = sys.argv[2]
+POPS = "--no-pops" not in sys.argv[3:]  # leave text pops out when a voiceover goes on top
 FPS, T = tl["fps"], tl.get("xfade_frames", 8)
 
 # clip start times on the joined timeline (same maths as cut_hd.py)
@@ -171,13 +172,13 @@ for i, c in enumerate(tl["clips"]):
     lt0 = starts[i] + (0.15 if i else 0)  # overlay_ugc.html delays everything after clip 0 by 0.15s
     for b in c.get("beats", [{"at": 0, **c}]):
         at = lt0 + b["at"]
-        if b.get("hook"):
+        if b.get("hook") and POPS:
             place(sfx, pop(), at + 0.05, 0.55)
-        if b.get("pin"):
+        if b.get("pin") and POPS:
             place(sfx, pop(), at + 0.6, 0.6)
-        if b.get("card"):
+        if b.get("card") and POPS:
             place(sfx, pop(), at + 0.08, 0.65)
-        if b.get("text"):
+        if b.get("text") and POPS:
             place(sfx, pop(), at + 0.05, 0.45)
         if b.get("rating"):
             place(sfx, sparkle(), at + 0.9, 1.0)
