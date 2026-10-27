@@ -1,19 +1,91 @@
 {
   "source": "/root/.claude/uploads/7d7b5ee0-565a-534a-8534-a39913b93a87/ea9892de-copy_328CF44A-7116-4195-BE2B-408AD3751D9D.mov",
   "upscale": "/home/user/models/realesr-general-x4v3.pth",
-  "fps": 24, "w": 1080, "h": 1920, "src_w": 480, "src_h": 854, "xfade_frames": 8,
-  "grade": "eq=contrast=1.05:saturation=1.07:gamma=1.02,colorbalance=rm=0.02:bm=-0.02",
+  "fps": 24,
+  "w": 1080,
+  "h": 1920,
+  "src_w": 480,
+  "src_h": 854,
+  "xfade_frames": 8,
   "clips": [
-    {"in": 29.0, "out": 31.2, "zoom": 0.05, "hook": ["Okay… this coconut", "green rice drink is", "*actually* worth the hype"]},
-    {"in": 0.0,  "out": 2.0,  "transition": "fade",       "pin": "Cong Caphe", "text": "Found it 📍"},
-    {"in": 4.0,  "out": 6.0,  "transition": "smoothleft", "text": "Cozy *vintage Vietnamese* vibes inside"},
-    {"in": 6.4,  "out": 8.0,  "transition": "fade",       "text": "They even sell *merch* 👀"},
-    {"in": 9.5,  "out": 12.0, "transition": "fade",       "text": "Got the *coconut green rice* + an *avocado smoothie*"},
-    {"in": 23.0, "out": 24.6, "transition": "smoothup",   "card": ["MUST TRY", "Coconut Green Rice 🥥"]},
-    {"in": 32.5, "out": 34.6, "transition": "fade",       "text": "Thick, creamy, *not too sweet*"},
-    {"in": 39.0, "out": 40.4, "transition": "smoothup",   "card": ["ALSO GOOD", "Avocado Smoothie 🥑"]},
-    {"in": 42.4, "out": 44.4, "transition": "fade",       "text": "Rich, smooth and *so refreshing*"},
-    {"in": 48.3, "out": 50.3, "transition": "fade",       "text": "Would I come back? *100%*", "rating": "10/10"},
-    {"in": 11.6, "out": 13.6, "transition": "fadeblack",  "cta": true}
-  ]
+    {
+      "in": 29.0,
+      "out": 31.2,
+      "zoom": 0.05,
+      "hook": [
+        "Okay… this coconut",
+        "green rice drink is",
+        "*actually* worth the hype"
+      ]
+    },
+    {
+      "in": 0.0,
+      "out": 2.0,
+      "transition": "fade",
+      "pin": "Cong Caphe",
+      "text": "Found it 📍"
+    },
+    {
+      "in": 4.0,
+      "out": 6.0,
+      "transition": "smoothleft",
+      "text": "Cozy *vintage Vietnamese* vibes inside"
+    },
+    {
+      "in": 6.4,
+      "out": 8.0,
+      "transition": "fade",
+      "text": "They even sell *merch* 👀"
+    },
+    {
+      "in": 9.5,
+      "out": 12.0,
+      "transition": "fade",
+      "text": "Got the *coconut green rice* + an *avocado smoothie*"
+    },
+    {
+      "in": 23.0,
+      "out": 24.6,
+      "transition": "smoothup",
+      "card": [
+        "MUST TRY",
+        "Coconut Green Rice 🥥"
+      ]
+    },
+    {
+      "in": 32.5,
+      "out": 34.6,
+      "transition": "fade",
+      "text": "Thick, creamy, *not too sweet*"
+    },
+    {
+      "in": 39.0,
+      "out": 40.4,
+      "transition": "smoothup",
+      "card": [
+        "ALSO GOOD",
+        "Avocado Smoothie 🥑"
+      ]
+    },
+    {
+      "in": 42.4,
+      "out": 44.4,
+      "transition": "fade",
+      "text": "Rich, smooth and *so refreshing*"
+    },
+    {
+      "in": 48.3,
+      "out": 50.3,
+      "transition": "fade",
+      "text": "Would I come back? *100%*",
+      "rating": "10/10"
+    },
+    {
+      "in": 11.6,
+      "out": 13.6,
+      "transition": "fadeblack",
+      "cta": true
+    }
+  ],
+  "input_filter": "zscale=t=linear:npl=203:tin=arib-std-b67:pin=bt2020:min=bt2020nc:rin=tv,format=gbrpf32le,zscale=p=bt709,tonemap=mobius:param=0.3:desat=0,zscale=t=bt709:m=bt709:r=tv,format=yuv420p"
 }
