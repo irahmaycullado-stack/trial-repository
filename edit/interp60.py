@@ -20,7 +20,8 @@ tags = ["-colorspace", st.get("color_space", "bt709"), "-color_primaries", st.ge
         "-color_trc", st.get("color_transfer", "bt709"), "-color_range", "tv"]
 total = round(dur * FPS)
 per = -(-total // CHUNKS)
-mi = f"minterpolate=fps={FPS}:mi_mode=mci:mc_mode=aobmc:me_mode=bidir:vsbmc=1"
+# tpad holds the last frame so interpolation still has a neighbour for the final output frames
+mi = f"tpad=stop_mode=clone:stop_duration=0.5,minterpolate=fps={FPS}:mi_mode=mci:mc_mode=aobmc:me_mode=bidir:vsbmc=1"
 
 
 def run(i):
